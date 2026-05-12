@@ -1,35 +1,33 @@
+# 1. 修复 PATH 环境变量
 export PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:$PATH
 
-# 定义相关路径
+# 定义路径
 ROLE_PATH="/sys/class/udc/ci_hdrc.0/device/driver/ci_hdrc.0/role"
 STATE_PATH="/sys/class/udc/ci_hdrc.0/state"
 
-# 1. 开机先强制切到 device (gadget) 模式
-# 加上错误重定向，防止路径不存在时报错
+# 2. 开机先设为 device (gadget) 模式以触发状态检测
 echo "gadget" > "$ROLE_PATH" 2>/dev/null
 
-# 2. 等待 25 秒让硬件完成 VBUS 检测和枚举
-# 25秒较保守，如果想开机更快，可以尝试缩短到 10-15s
-sleep 25
+# 3. 等待硬件和主机完成握手枚举
+# 如果 20 秒太长，建议先用 10-15 秒测试，稳定后再缩短
+sleep 20
 
-# 3. 检测连接状态
-# 使用 xargs 去除可能存在的换行符或空格
+# 4. 获取当前状态并去除多余空格
 STATUS=$(cat "$STATE_PATH" 2>/dev/null | xargs)
 
-# 只要状态包含 "not attached" 或者获取不到状态，就切到 host
-if [ -z "$STATUS" ] || [ "$STATUS" = "not attached" ]; then
-    echo "USB Status: [$STATUS]. 未检测到主机连接，切换到 Host 模式..."
+# 5. 核心逻辑判断
+if [ "$STATUS" = "configured" ]; then
+    echo "USB Status: [configured]. 已连接到主机，保持 Device 模式。"
+else
+    # 只要不是 configured（可能是 not attached, powered, addressed 等），就切到 host
+    echo "USB Status: [$STATUS]. 未连接到有效主机，切换到 Host 模式..."
     echo "host" > "$ROLE_PATH"
     
-    # 给硬件层 2 秒切换电压和初始化总线的时间
+    # 切换模式后稍作等待，重启网络以加载 Host 驱动下的网络配置
     sleep 2
-    
-    # 重启网络（针对 Host 模式下的 USB 网卡驱动生效）
     if [ -x /etc/init.d/network ]; then
         /etc/init.d/network restart
     fi
-else
-    echo "USB Status: [$STATUS]. 检测到主机，保持 Device 模式。"
 fi
 
 
