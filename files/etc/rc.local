@@ -7,6 +7,8 @@
 #fi
 
 
+
+export PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:$PATH
 # 定义相关路径（根据你的系统确认 ci_hdrc.0 的实际位置）
 ROLE_PATH="/sys/class/udc/ci_hdrc.0/device/driver/ci_hdrc.0/role"
 STATE_PATH="/sys/class/udc/ci_hdrc.0/state"
