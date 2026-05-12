@@ -1,38 +1,36 @@
-#/etc/init.d/gc restart && sleep 25 && /etc/init.d/network restart
-#sleep 3
-#grep 0 /sys/kernel/debug/usb/ci_hdrc.0/device | grep speed
-#if [ $? -eq 0 ]
-#then
-#echo host > /sys/kernel/debug/usb/ci_hdrc.0/role
-#fi
-
-
-
 export PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:$PATH
-# 定义相关路径（根据你的系统确认 ci_hdrc.0 的实际位置）
+
+# 定义相关路径
 ROLE_PATH="/sys/class/udc/ci_hdrc.0/device/driver/ci_hdrc.0/role"
 STATE_PATH="/sys/class/udc/ci_hdrc.0/state"
 
 # 1. 开机先强制切到 device (gadget) 模式
-echo "gadget" > "$ROLE_PATH"
+# 加上错误重定向，防止路径不存在时报错
+echo "gadget" > "$ROLE_PATH" 2>/dev/null
 
-# 2. 等待几秒钟让硬件和驱动完成初始化及检测
+# 2. 等待 25 秒让硬件完成 VBUS 检测和枚举
+# 25秒较保守，如果想开机更快，可以尝试缩短到 10-15s
 sleep 25
 
 # 3. 检测连接状态
-# "not attached" 表示没有连上 USB 主机 (如 PC)
-# 如果连上了，通常会显示 "powered", "default", "addressed" 或 "configured"
-STATUS=$(cat "$STATE_PATH")
+# 使用 xargs 去除可能存在的换行符或空格
+STATUS=$(cat "$STATE_PATH" 2>/dev/null | xargs)
 
-if [ "$STATUS" = "not attached" ]; then
-    echo "未检测到 USB 主机连接，正在切换到 host 模式..."
+# 只要状态包含 "not attached" 或者获取不到状态，就切到 host
+if [ -z "$STATUS" ] || [ "$STATUS" = "not attached" ]; then
+    echo "USB Status: [$STATUS]. 未检测到主机连接，切换到 Host 模式..."
     echo "host" > "$ROLE_PATH"
+    
+    # 给硬件层 2 秒切换电压和初始化总线的时间
     sleep 2
-    /etc/init.d/network restart
+    
+    # 重启网络（针对 Host 模式下的 USB 网卡驱动生效）
+    if [ -x /etc/init.d/network ]; then
+        /etc/init.d/network restart
+    fi
 else
-    echo "检测到 USB 主机 (状态: $STATUS)，保持 device 模式。"
+    echo "USB Status: [$STATUS]. 检测到主机，保持 Device 模式。"
 fi
-
 
 
 # 开机强制切换USB为HOST模式
