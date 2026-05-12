@@ -6,11 +6,37 @@
 #echo host > /sys/kernel/debug/usb/ci_hdrc.0/role
 #fi
 
-/etc/init.d/gc restart && sleep 25 && /etc/init.d/network restart
+
+# 定义相关路径（根据你的系统确认 ci_hdrc.0 的实际位置）
+ROLE_PATH="/sys/class/udc/ci_hdrc.0/device/driver/ci_hdrc.0/role"
+STATE_PATH="/sys/class/udc/ci_hdrc.0/state"
+
+# 1. 开机先强制切到 device (gadget) 模式
+echo "gadget" > "$ROLE_PATH"
+
+# 2. 等待几秒钟让硬件和驱动完成初始化及检测
+sleep 25
+
+# 3. 检测连接状态
+# "not attached" 表示没有连上 USB 主机 (如 PC)
+# 如果连上了，通常会显示 "powered", "default", "addressed" 或 "configured"
+STATUS=$(cat "$STATE_PATH")
+
+if [ "$STATUS" = "not attached" ]; then
+    echo "未检测到 USB 主机连接，正在切换到 host 模式..."
+    echo "host" > "$ROLE_PATH"
+    sleep 2
+    /etc/init.d/network restart
+else
+    echo "检测到 USB 主机 (状态: $STATUS)，保持 device 模式。"
+fi
+
+
+
 # 开机强制切换USB为HOST模式
-echo host > /sys/class/udc/ci_hdrc.0/device/driver/ci_hdrc.0/role
+#echo host > /sys/class/udc/ci_hdrc.0/device/driver/ci_hdrc.0/role
 # 可选：等USB稳定后重启网络，让RTL8152网卡识别
-sleep 2
-/etc/init.d/network restart
+#sleep 2
+#/etc/init.d/network restart
 
 exit 0
