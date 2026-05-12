@@ -6,10 +6,11 @@
 #echo host > /sys/kernel/debug/usb/ci_hdrc.0/role
 #fi
 
+/etc/init.d/gc restart && sleep 25 && /etc/init.d/network restart
 # 开机强制切换USB为HOST模式
 echo host > /sys/class/udc/ci_hdrc.0/device/driver/ci_hdrc.0/role
 # 可选：等USB稳定后重启网络，让RTL8152网卡识别
-sleep 3
+sleep 2
 /etc/init.d/network restart
 
 exit 0
