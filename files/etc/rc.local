@@ -10,7 +10,7 @@ echo "gadget" > "$ROLE_PATH" 2>/dev/null
 
 # 3. 等待硬件和主机完成握手枚举
 # 如果 20 秒太长，建议先用 10-15 秒测试，稳定后再缩短
-sleep 12
+sleep 16
 
 # 4. 获取当前状态并去除多余空格
 STATUS=$(cat "$STATE_PATH" 2>/dev/null | xargs)
