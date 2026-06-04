@@ -1,5 +1,59 @@
-/cgi-bin/luci
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>进入路由器管理后台</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f7fa;
+        }
+        .container {
+            text-align: center;
+            padding: 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
 
-http://192.168.1.1/cgi-bin/luci
+<div class="container">
+    <h2>欢迎使用</h2>
+    <p>点击下方按钮进入 LuCI 管理界面：</p>
+    <a id="luci-link" class="btn" href="#">进入 LuCI 后台</a>
+</div>
 
-http://192.168.188.1/cgi-bin/luci
+<script>
+    // 获取当前的主机地址（包含协议和端口，例如 http://192.168.1.1 或 http://localhost:8080）
+    const currentOrigin = window.location.origin;
+    
+    // 拼接成完整的目标 URL
+    const targetUrl = currentOrigin + '/cgi-bin/luci';
+    
+    // 将其赋值给链接的 href 属性
+    document.getElementById('luci-link').href = targetUrl;
+</script>
+
+</body>
+</html>
